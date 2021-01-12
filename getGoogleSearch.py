@@ -29,8 +29,6 @@ user_agents = list()
 
 # results from the search engine
 # basically include url, title,content
-
-
 class SearchResult:
     def __init__(self):
         self.url = ''
@@ -146,7 +144,7 @@ class GoogleAPI:
                     results.append(result)
         return results
 
-    def search(self, query, lang='en', num=results_per_page):
+    def search(self, query, lang='jp', num=results_per_page):
         """Return a list of lists
 
         search web
