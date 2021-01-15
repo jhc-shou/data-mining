@@ -29,6 +29,8 @@ user_agents = list()
 
 # results from the search engine
 # basically include url, title,content
+
+
 class SearchResult:
     def __init__(self):
         self.url = ''
