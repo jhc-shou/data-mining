@@ -1,61 +1,88 @@
-from selectorlib import Extractor
-import requests 
-import json 
-from time import sleep
+import time
+import json
 import csv
+import re
+from selectorlib import Extractor
 from dateutil import parser as dateparser
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, WebDriverException
+
 
 # Create an Extractor by reading from the YAML file
 e = Extractor.from_yaml_file('selectors.yml')
+options = webdriver.ChromeOptions()
+options.add_argument("start-maximized")
+options.add_argument("disable-infobars")
+options.add_argument("--disable-extensions")
+options.add_experimental_option("excludeSwitches", ["enable-automation"])
+driver = driver = webdriver.Chrome(chrome_options=options,
+                                   executable_path=ChromeDriverManager().install())
 
-def scrape(url):    
-    headers = {
-        'authority': 'www.amazon.com',
-        'pragma': 'no-cache',
-        'cache-control': 'no-cache',
-        'dnt': '1',
-        'upgrade-insecure-requests': '1',
-        'user-agent': 'Mozilla/5.0 (X11; CrOS x86_64 8172.45.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.64 Safari/537.36',
-        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-        'sec-fetch-site': 'none',
-        'sec-fetch-mode': 'navigate',
-        'sec-fetch-dest': 'document',
-        'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8',
-    }
 
-    # Download the page using requests
-    print("Downloading %s"%url)
-    r = requests.get(url, headers=headers)
-    # Simple check to check if page was blocked (Usually 503)
-    if r.status_code > 500:
-        if "To discuss automated access to Amazon data please contact" in r.text:
-            print("Page %s was blocked by Amazon. Please try using better proxies\n"%url)
-        else:
-            print("Page %s must have been blocked by Amazon as the status code was %d"%(url,r.status_code))
-        return None
-    # Pass the HTML of the page and create 
-    return e.extract(r.text)
+def getDictComm():
+    html = driver.page_source.replace('\n', '')
+    return e.extract(html)
+
+# Pass the HTML of the page and convert to comm data
+
+
+def NextPage():
+    try:
+        # wait page load
+        time.sleep(3)
+        driver.execute_script("return arguments[0].scrollIntoView(true);", WebDriverWait(
+            driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//li[@class='a-last']/a"))))
+        driver.find_element_by_xpath(
+            "//li[@class='a-last']/a").click()
+        print("Navigating to Next Page")
+        return True
+    except (TimeoutException, WebDriverException) as e:
+        print("Last page reached")
+        return False
+
+
+def writeToCSV(dictComm, writer):
+    for r in dictComm['reviews']:
+        r["product"] = dictComm["product_title"]
+        r['verified'] = 'Yes' if r['verified'] else 'No'
+        r['rating'] = r['rating'].split(
+            ' out of')[0] if r['rating'] else 'N/A'
+        r['images'] = "\n".join(
+            r['images']) if r['images'] else 'N/A'
+        r['date'] = dateparser.parse(
+            r['date'].split('on ')[-1]).strftime('%d %b %Y')
+        writer.writerow(r)
 
 # product_data = []
-with open("urls.txt",'r') as urllist, open('data.csv','w', encoding='UTF-8', errors='ignore') as outfile:
-    writer = csv.DictWriter(outfile, fieldnames=["title","content","date","variant","images","verified","author","rating","product","url"],quoting=csv.QUOTE_ALL)
-    writer.writeheader()
-    for url in urllist.readlines():
-        data = scrape(url) 
-        if data:
-            for r in data['reviews']:
-                r["product"] = data["product_title"]
-                r['url'] = url
-                if 'verified' in r:
-                    if 'Verified Purchase' in r['verified']:
-                        r['verified'] = 'Yes'
-                    else:
-                        r['verified'] = 'Yes'
-                r['rating'] = r['rating'].split(' out of')[0]
-                date_posted = r['date'].split('on ')[-1]
-                if r['images']:
-                    r['images'] = "\n".join(r['images'])
-                r['date'] = dateparser.parse(date_posted).strftime('%d %b %Y')
-                writer.writerow(r)
-            # sleep(5)
-    
+
+
+def getAmazonCom():
+    with open("urls.txt", 'r') as urllist:
+        for url in urllist.readlines():
+            driver.get(url)
+            html = driver.page_source.replace('\n', '')
+            dictComm = e.extract(html)
+            if dictComm:
+                productTittle = re.findall(
+                    r'[^\*"/:?\\|<>]', dictComm["product_title"].replace(' ', '_'), re.S)
+                csvFileName = "".join(productTittle) + '.csv'
+                with open('comm/'+csvFileName, 'w', encoding='UTF-8', errors='ignore') as outfile:
+                    writer = csv.DictWriter(outfile, fieldnames=["title", "content", "date", "variant",
+                                                                 "images", "verified", "author", "rating", "product"], quoting=csv.QUOTE_ALL)
+                    writer.writeheader()
+                    writeToCSV(dictComm, writer)
+                    while True:
+                        if NextPage():
+                            writeToCSV(getDictComm(), writer) 
+                        else: 
+                            break
+    driver.close()
+
+
+if __name__ == '__main__':
+    getAmazonCom()

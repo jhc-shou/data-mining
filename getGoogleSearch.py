@@ -16,6 +16,7 @@ import operator
 
 import sys
 
+
 # Load config from .env file
 try:
     load_dotenv(find_dotenv(usecwd=True))
@@ -61,15 +62,13 @@ class SearchResult:
               'content\t->', self.content)
 
     def writeFile(self, filename):
-        file = open(filename, 'a')
         try:
-            file.write('url:' + self.url + '\n')
-            file.write('title:' + self.title + '\n')
-            file.write('content:' + self.content + '\n\n')
+            with open(filename, 'a') as f:
+                f.write('url:' + self.url + '\n')
+                f.write('title:' + self.title + '\n')
+                f.write('content:' + self.content + '\n\n')
         except IOError as e:
             print('file error:', e)
-        finally:
-            file.close()
 
 
 class GoogleAPI:
@@ -114,13 +113,8 @@ class GoogleAPI:
         """
         results = list()
         soup = BeautifulSoup(html, 'html.parser')
-        div = soup.find('div', id='main')
-        if (type(div) == type(None)):
-            div = soup.find('div', id='center_col')
-        if (type(div) == type(None)):
-            div = soup.find('body')
-        if (type(div) != type(None)):
-            lis = div.findAll('a')
+        if (type(soup) != type(None)):
+            lis = soup.findAll('a')
             if(len(lis) > 0):
                 for link in lis:
                     if (type(link) == type(None)):
@@ -129,9 +123,11 @@ class GoogleAPI:
                     url = link['href']
                     if url.find(".google") > 6:
                         continue
+                    if url.find("http") == -1 :
+                        continue
 
                     url = self.extractUrl(url)
-                    if(operator.eq(url, '') == 0):
+                    if(operator.eq(url, '')):
                         continue
                     title = link.renderContents().decode('utf-8')
                     title = re.sub(r'<.+?>', '', title)
@@ -200,13 +196,9 @@ class GoogleAPI:
 
 
 def load_user_agent():
-    fp = open('./user_agents', 'r')
-
-    line = fp.readline().strip('\n')
-    while(line):
-        user_agents.append(line)
-        line = fp.readline().strip('\n')
-    fp.close()
+    with open('./user_agents', 'r') as fp:
+        for line in fp.readlines():
+            user_agents.append(line.strip('\n'))
 
 
 def crawler():
