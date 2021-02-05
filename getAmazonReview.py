@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+# get commends from Amazon
 import time
 import json
 import csv
@@ -23,14 +26,12 @@ options.add_experimental_option("excludeSwitches", ["enable-automation"])
 driver = driver = webdriver.Chrome(chrome_options=options,
                                    executable_path=ChromeDriverManager().install())
 
-
+# extract html to dict
 def getDictComm():
     html = driver.page_source.replace('\n', '')
     return e.extract(html)
 
-# Pass the HTML of the page and convert to comm data
-
-
+# goto next page
 def NextPage():
     try:
         # wait page load
@@ -45,7 +46,7 @@ def NextPage():
         print("Last page reached")
         return False
 
-
+# write dict to scv file
 def writeToCSV(dictComm, writer):
     for r in dictComm['reviews']:
         r["product"] = dictComm["product_title"]
@@ -59,8 +60,6 @@ def writeToCSV(dictComm, writer):
         writer.writerow(r)
 
 # product_data = []
-
-
 def getAmazonCom():
     with open("urls.txt", 'r') as urllist:
         for url in urllist.readlines():
@@ -78,8 +77,8 @@ def getAmazonCom():
                     writeToCSV(dictComm, writer)
                     while True:
                         if NextPage():
-                            writeToCSV(getDictComm(), writer) 
-                        else: 
+                            writeToCSV(getDictComm(), writer)
+                        else:
                             break
     driver.close()
 
