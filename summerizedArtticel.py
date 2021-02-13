@@ -4,12 +4,11 @@ import csv,re
 import nagisa # library used for Natural Language Processing for japanese
 import pykakasi # library for conversion of Kanji into Hirigana, Katakana and Romaji
 import heapq # library for implementing priority queues where the queue item with higher weight is given more priority in processing
-import pandas as pd # library for managing the data in form of table
 from jamdict import Jamdict # library for searching the japanese vocabulary
 
 def getText():
     text=''
-    with open('comm\Fuji_Medical_Equipment_Co.,_Ltd._Foot_Massager_-_FT-100.csv', 'r', encoding='UTF-8', errors='ignore') as cf:
+    with open('comm\Naipo.csv', 'r', encoding='UTF-8', errors='ignore') as cf:
         reader = csv.reader(cf)
         header = next(reader)
         for row in reader:

@@ -15,7 +15,6 @@ import re
 import random
 import types
 from dotenv import load_dotenv, find_dotenv
-from bs4 import BeautifulSoup
 import operator
 
 import sys
