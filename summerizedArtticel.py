@@ -8,7 +8,7 @@ from jamdict import Jamdict # library for searching the japanese vocabulary
 
 def getText():
     text=''
-    with open('comm\Naipo.csv', 'r', encoding='UTF-8', errors='ignore') as cf:
+    with open('comm\パナソニック_エアーマッサージャー_レッグリフレ_足先~ふくらはぎ_6コース_温感機能搭載_ピンク_EW-RA89-P.csv', 'r', encoding='UTF-8', errors='ignore') as cf:
         reader = csv.reader(cf)
         header = next(reader)
         for row in reader:
@@ -67,6 +67,7 @@ def getSpaceSeperatedJpWords(text):
   
 def getSentScore(): 
     word2count = getWeightWordFq()
+    print(word2count)
     sentences = getText().split("。")
     sent2score={} # This dictionary stores each sentence and its score as value
     for sentence in sentences: # for each sentence in all sentences
@@ -89,3 +90,9 @@ if __name__ == '__main__':
     summary = [''.join(b)+'。' for b in best_sentences]
 
     print(''.join(summary))
+
+    try:
+        with open('summary.txt', 'w', encoding='UTF-8', errors='ignore') as sf:
+            sf.write(''.join(summary))
+    except Exception as e:
+        print(e)
