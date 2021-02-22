@@ -1,0 +1,29 @@
+product_title:
+  css: 'h2.revItemTtl.fn a[sid_linkname="item_01"]'
+  type: Text
+reviewers:
+  css: 'li.revUserFaceDtl'
+  multiple: true
+  type: Text
+  children:
+    name:
+      css: 'dt.revUserFaceName.reviewer a[l2id_linkname="body_01"]'
+      type: Text
+    info:
+      css: 'span.revUserFaceDtlTxt span:nth-child(1)'
+      type: Text
+reviews:
+  css: 'div.revRvwUserMain'
+  multiple: true
+  type: Text
+  children:
+    content:
+      css: 'dd.revRvwUserEntryCmt.description'
+      type: Text
+    rating:
+      css: 'span.revUserRvwerNum.value'
+      type: Text
+    date:
+      css: 'span.revUserEntryDate.dtreviewed'
+      type: Text
+
