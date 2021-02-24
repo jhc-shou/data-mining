@@ -17,6 +17,9 @@ reviews:
   multiple: true
   type: Text
   children:
+    title:
+      css: 'dt.revRvwUserEntryTtl.summary'
+      type: Text
     content:
       css: 'dd.revRvwUserEntryCmt.description'
       type: Text
@@ -26,4 +29,3 @@ reviews:
     date:
       css: 'span.revUserEntryDate.dtreviewed'
       type: Text
-
