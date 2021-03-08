@@ -34,8 +34,6 @@ def getDictComm():
     return e.extract(html)
 
 # goto next page
-
-
 def NextPage():
     try:
         # wait page load
@@ -50,8 +48,6 @@ def NextPage():
         return False
 
 # write dict to scv file
-
-
 def writeToCSV(dictComm, writer):
     for (r, rr) in zip(dictComm['reviews'], dictComm['reviewers']):
         r["product"] = dictComm["product_title"]
@@ -60,8 +56,6 @@ def writeToCSV(dictComm, writer):
         writer.writerow(r)
 
 # product_data = []
-
-
 def getRakutenReview():
     with open("urls.txt", 'r') as urllist:
         for url in urllist.readlines():
