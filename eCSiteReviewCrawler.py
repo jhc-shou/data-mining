@@ -1,9 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import time
-import json
-import csv
-import re
+import json,csv,re
 from selectorlib import Extractor
 from dateutil import parser as dateparser
 from selenium import webdriver
@@ -66,6 +64,7 @@ class ReviewAPI:
                 r["product"] = reviewProperty.getDictComm["product_title"]
                 r['rating'] = r['rating'] if r['rating'] else 'N/A'
                 r['author'] = rr['name']
+                writer.writerow(r)
         elif reviewProperty.getECSite == 'amazon':
             for r in reviewProperty.getDictComm['reviews']:
                 r["product"] = reviewProperty.getDictComm["product_title"]
@@ -77,7 +76,8 @@ class ReviewAPI:
                 month = r['date'].split('年')[1].split('月')[0]
                 day = r['date'].split('年')[1].split('月')[1].split('日')[0]
                 r['date'] = '-'.join((year,month,day))
-        writer.writerow(r)
+                writer.writerow(r)
+        
 
 
 # product_data = []
@@ -101,16 +101,19 @@ def reviewCrawler():
                 productTittle = re.findall(
                     r'[^\*"/:?\\|<>]', reviewProperty.getDictComm["product_title"].replace(' ', '_'), re.S)
                 csvFileName = "".join(productTittle) + '.csv'
-                with open('comm/'+csvFileName, 'w', encoding='UTF-8', errors='ignore') as outfile:
-                    writer = csv.DictWriter(outfile, fieldnames=["title", "content", "date", "variant",
-                                                                 "images", "verified", "author", "rating", "product"], quoting=csv.QUOTE_ALL)
-                    writer.writeheader()
-                    api.writeToCSV(writer)
-                    while True:
-                        if api.NextPage():
-                            api.writeToCSV(writer)
-                        else:
-                            break
+                try:
+                    with open('comm/'+csvFileName, 'w', encoding='UTF-8', errors='ignore') as outfile:
+                        writer = csv.DictWriter(outfile, fieldnames=["title", "content", "date", "variant",
+                                                                    "images", "verified", "author", "rating", "product"], quoting=csv.QUOTE_ALL)
+                        writer.writeheader()
+                        api.writeToCSV(writer)
+                        while True:
+                            if api.NextPage():
+                                api.writeToCSV(writer)
+                            else:
+                                break
+                except IOError as ioe:
+                    print('file error:', ioe)
     driver.close()
 
 
