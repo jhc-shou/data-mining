@@ -29,10 +29,13 @@ driver = driver = webdriver.Chrome(chrome_options=options,
 
 class ReviewAPI:
 
+    def __init__(self):
+        pass
+
     # extract html to dict
     # Create an Extractor by reading from the YAML file
     def extractUrl(self):
-        e = Extractor.from_yaml_file(reviewProperty.getSiteSelector())
+        e = Extractor.from_yaml_file(reviewProperty.getSiteSelector)
         html = driver.page_source.replace('\n', '')
         reviewProperty.setDictComm(e.extract(html))
 
@@ -41,11 +44,11 @@ class ReviewAPI:
         try:
             # wait page load
             time.sleep(3)
-            if reviewProperty.getECSite() == 'rakuten':
+            if reviewProperty.getECSite == 'rakuten':
                 element = WebDriverWait(
                     driver, 10).until(EC.presence_of_element_located((By.LINK_TEXT, '次の15件 >>')))
                 element.click()
-            elif reviewProperty.getECSite() == 'amazon':
+            elif reviewProperty.getECSite == 'amazon':
                 driver.execute_script("return arguments[0].scrollIntoView(true);", WebDriverWait(
                     driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//li[@class='a-last']/a"))))
                 driver.find_element_by_xpath(
@@ -58,14 +61,14 @@ class ReviewAPI:
 
     # write dict to scv file
     def writeToCSV(self, writer):
-        if reviewProperty.getECSite() == 'rakuten':
-            for (r, rr) in zip(reviewProperty.getDictComm()['reviews'], reviewProperty.getDictComm()['reviewers']):
-                r["product"] = reviewProperty.getDictComm()["product_title"]
+        if reviewProperty.getECSite == 'rakuten':
+            for (r, rr) in zip(reviewProperty.getDictComm['reviews'], reviewProperty.getDictComm['reviewers']):
+                r["product"] = reviewProperty.getDictComm["product_title"]
                 r['rating'] = r['rating'] if r['rating'] else 'N/A'
                 r['author'] = rr['name']
-        elif reviewProperty.getECSite() == 'amazon':
-            for r in reviewProperty.getDictComm()['reviews']:
-                r["product"] = reviewProperty.getDictComm()["product_title"]
+        elif reviewProperty.getECSite == 'amazon':
+            for r in reviewProperty.getDictComm['reviews']:
+                r["product"] = reviewProperty.getDictComm["product_title"]
                 r['verified'] = 'Yes' if r['verified'] else 'No'
                 r['rating'] = r['rating'].split(' out of')[0] if r['rating'] else 'N/A'
                 r['images'] = " ".join(r['images']) if r['images'] else 'N/A'
@@ -78,15 +81,21 @@ def reviewCrawler():
     api = ReviewAPI()
     with open("urls.txt", 'r') as urllist:
         for url in urllist.readlines():
+
+            # check EC site source
             if url.find('rakuten') != -1:
                 reviewProperty.setECSite("rakuten")
             elif url.find('amazon') != -1:
                 reviewProperty.setECSite('amazon')
+            else:
+                print('wrong url: ', url,'\n')
+                continue
+
             driver.get(url)
             api.extractUrl()
-            if reviewProperty.getDictComm():
+            if reviewProperty.getDictComm:
                 productTittle = re.findall(
-                    r'[^\*"/:?\\|<>]', reviewProperty.getDictComm()["product_title"].replace(' ', '_'), re.S)
+                    r'[^\*"/:?\\|<>]', reviewProperty.getDictComm["product_title"].replace(' ', '_'), re.S)
                 csvFileName = "".join(productTittle) + '.csv'
                 with open('comm/'+csvFileName, 'w', encoding='UTF-8', errors='ignore') as outfile:
                     writer = csv.DictWriter(outfile, fieldnames=["title", "content", "date", "variant",
