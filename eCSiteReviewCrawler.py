@@ -72,7 +72,11 @@ class ReviewAPI:
                 r['verified'] = 'Yes' if r['verified'] else 'No'
                 r['rating'] = r['rating'].split(' out of')[0] if r['rating'] else 'N/A'
                 r['images'] = " ".join(r['images']) if r['images'] else 'N/A'
-                r['date'] = dateparser.parse(r['date'].split('on ')[-1]).strftime('%d %b %Y')
+                # r['date'] = dateparser.parse(r['date'].split('に')[0]).strftime('%d %b %Y')
+                year = r['date'].split('年')[0]
+                month = r['date'].split('年')[1].split('月')[0]
+                day = r['date'].split('年')[1].split('月')[1].split('日')[0]
+                r['date'] = '-'.join((year,month,day))
         writer.writerow(r)
 
 
