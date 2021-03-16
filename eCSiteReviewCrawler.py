@@ -20,11 +20,11 @@ class ReviewAPI:
         self.__reviewProperty = ReviewProperty()
 
         self.__options = webdriver.ChromeOptions()
-        __options.add_argument("start-maximized")
-        __options.add_argument("disable-infobars")
-        __options.add_argument("--disable-extensions")
-        __options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        self.__driver = driver = webdriver.Chrome(chrome_options=__options,
+        self.__options.add_argument("start-maximized")
+        self.__options.add_argument("disable-infobars")
+        self.__options.add_argument("--disable-extensions")
+        self.__options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        self.__driver = driver = webdriver.Chrome(chrome_options=self.__options,
                                         executable_path=ChromeDriverManager().install())
 
     # extract html to dict
@@ -77,7 +77,7 @@ class ReviewAPI:
 
     # product_data = []
     def reviewCrawler(self):
-        api = ReviewAPI()
+        # api = ReviewAPI()
         with open("urls.txt", 'r') as urllist:
             for url in urllist.readlines():
 
@@ -91,7 +91,7 @@ class ReviewAPI:
                     continue
 
                 self.__driver.get(url)
-                api.extractUrl()
+                self.__extractUrl()
                 if self.__reviewProperty.getDictComm:
                     productTittle = re.findall(
                         r'[^\*"/:?\\|<>]', self.__reviewProperty.getDictComm["product_title"].replace(' ', '_'), re.S)
@@ -101,10 +101,10 @@ class ReviewAPI:
                             writer = csv.DictWriter(outfile, fieldnames=["title", "content", "date", "variant",
                                                                         "images", "verified", "author", "rating", "product"], quoting=csv.QUOTE_ALL)
                             writer.writeheader()
-                            api.writeToCSV(writer)
+                            self.__writeToCSV(writer)
                             while True:
-                                if api.NextPage():
-                                    api.writeToCSV(writer)
+                                if self.__NextPage():
+                                    self.__writeToCSV(writer)
                                 else:
                                     break
                     except IOError as ioe:
