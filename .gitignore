@@ -131,3 +131,7 @@ dmypy.json
 
 # row csv data
 comm/*
+
+# summary text file
+summary.txt
+urls.txt
