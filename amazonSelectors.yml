@@ -18,11 +18,11 @@ reviews:
     variant:
       css: "a.a-size-mini"
       type: Text
-    images:
-      css: img.review-image-tile
-      multiple: true
-      type: Attribute
-      attribute: src
+    # images:
+    #   css: img.review-image-tile
+    #   multiple: true
+    #   type: Attribute
+    #   attribute: src
     verified:
       css: 'span[data-hook="avp-badge"]'
       type: Text

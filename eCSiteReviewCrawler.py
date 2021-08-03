@@ -1,7 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import time
-import json,csv,re
+import json
+import csv
+import re
 from selectorlib import Extractor
 from dateutil import parser as dateparser
 from selenium import webdriver
@@ -23,9 +25,10 @@ class ReviewAPI:
         self.__options.add_argument("start-maximized")
         self.__options.add_argument("disable-infobars")
         self.__options.add_argument("--disable-extensions")
-        self.__options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        self.__options.add_experimental_option(
+            "excludeSwitches", ["enable-automation"])
         self.__driver = driver = webdriver.Chrome(chrome_options=self.__options,
-                                        executable_path=ChromeDriverManager().install())
+                                                  executable_path=ChromeDriverManager().install())
 
     # extract html to dict
     # Create an Extractor by reading from the YAML file
@@ -56,57 +59,69 @@ class ReviewAPI:
 
     # write dict to scv file
     def __writeToCSV(self, writer):
-        if self.__reviewProperty.getECSite == 'rakuten':
-            for (r, rr) in zip(self.__reviewProperty.getDictComm['reviews'], self.__reviewProperty.getDictComm['reviewers']):
-                r["product"] = self.__reviewProperty.getDictComm["product_title"]
-                r['rating'] = r['rating'] if r['rating'] else 'N/A'
-                r['author'] = rr['name']
-                writer.writerow(r)
-        elif self.__reviewProperty.getECSite == 'amazon':
-            for r in self.__reviewProperty.getDictComm['reviews']:
-                r["product"] = self.__reviewProperty.getDictComm["product_title"]
-                r['verified'] = 'Yes' if r['verified'] else 'No'
-                r['rating'] = r['rating'].split(' out of')[0] if r['rating'] else 'N/A'
-                r['images'] = " ".join(r['images']) if r['images'] else 'N/A'
-                # r['date'] = dateparser.parse(r['date'].split('に')[0]).strftime('%d %b %Y')
-                year = r['date'].split('年')[0]
-                month = r['date'].split('年')[1].split('月')[0]
-                day = r['date'].split('年')[1].split('月')[1].split('日')[0]
-                r['date'] = '-'.join((year,month,day))
-                writer.writerow(r)
+        try:
+            if self.__reviewProperty.getECSite == 'rakuten':
+                for (r, rr) in zip(self.__reviewProperty.getDictComm['reviews'], self.__reviewProperty.getDictComm['reviewers']):
+                    r["product"] = self.__reviewProperty.getDictComm["product_title"]
+                    r['rating'] = r['rating'].split('つ')[0] if r['rating'] else 'N/A'
+                    r['author'] = rr['name']
+                    writer.writerow(r)
+            elif self.__reviewProperty.getECSite == 'amazon':
+                for r in self.__reviewProperty.getDictComm['reviews']:
+                    if '日本' in r['date']:
+                        r["product"] = self.__reviewProperty.getDictComm["product_title"]
+                        r['verified'] = 'Yes' if r['verified'] else 'No'
+                        r['rating'] = r['rating'].split('つ')[0] if r['rating'] else 'N/A'
+                        # r['images'] = " ".join(r['images']) if r['images'] else 'N/A'
+                        # r['date'] = dateparser.parse(r['date'].split('に')[0]).strftime('%d %b %Y')
+                        year = r['date'].split('年')[0]
+                        month = r['date'].split('年')[1].split('月')[0]
+                        day = r['date'].split('年')[1].split('月')[1].split('日')[0]
+                        r['date'] = '-'.join((year, month, day))
+
+                        writer.writerow(r)
+                    else:
+                        break
+        except Exception as e:
+            print('[{1}] Error : {0}'.format(e, ReviewAPI.__writeToCSV.__name__))
 
     # product_data = []
+
     def reviewCrawler(self):
-        # api = ReviewAPI()
-        with open("urls.txt", 'r') as urllist:
-            for url in urllist.readlines():
+        try:
+            with open("urls.txt", 'r') as urllist:
+                for url in urllist.readlines():
 
-                # check EC site source
-                if url.find('rakuten') != -1:
-                    self.__reviewProperty.setECSite("rakuten")
-                elif url.find('amazon') != -1:
-                    self.__reviewProperty.setECSite('amazon')
-                else:
-                    print('wrong url: ', url,'\n')
-                    continue
+                    # check EC site source
+                    if url.find('rakuten') != -1:
+                        self.__reviewProperty.setECSite("rakuten")
+                    elif url.find('amazon') != -1:
+                        self.__reviewProperty.setECSite('amazon')
+                    else:
+                        print('wrong url: ', url, '\n')
+                        continue
 
-                self.__driver.get(url)
-                self.__extractUrl()
-                if self.__reviewProperty.getDictComm:
-                    productTittle = re.findall(
-                        r'[^\*"/:?\\|<>]', self.__reviewProperty.getDictComm["product_title"].replace(' ', '_'), re.S)
-                    csvFileName = "".join(productTittle) + '.csv'
-                    try:
-                        with open('comm/'+csvFileName, 'w', encoding='UTF-8', errors='ignore') as outfile:
-                            writer = csv.DictWriter(outfile, fieldnames=["title", "content", "date", "variant",
-                                                                        "images", "verified", "author", "rating", "product"], quoting=csv.QUOTE_ALL)
-                            writer.writeheader()
-                            self.__writeToCSV(writer)
-                            while True:
-                                if self.__NextPage():
-                                    self.__writeToCSV(writer)
-                                else:
-                                    break
-                    except IOError as ioe:
-                        print('file error:', ioe)
+                    self.__driver.get(url)
+                    self.__extractUrl()
+                    if self.__reviewProperty.getDictComm:
+                        productTittle = re.findall(
+                            r'[^\*"/:?\\|<>]', self.__reviewProperty.getDictComm["product_title"].replace(' ', '_'), re.S)
+                        csvFileName = '{0}_{1}.csv'.format(
+                            self.__reviewProperty.getECSite, "".join(productTittle))
+                        try:
+                            with open('comm/'+csvFileName, 'w', encoding='UTF-8', errors='ignore') as outfile:
+                                writer = csv.DictWriter(outfile, fieldnames=["title", "content", "date", "variant", "verified", "author", "rating", "product"], quoting=csv.QUOTE_ALL)
+                                writer.writeheader()
+                                # self.__writeToCSV(writer)
+                                while True:
+                                    if self.__NextPage():
+                                        self.__extractUrl()
+                                        self.__writeToCSV(writer)
+                                    else:
+                                        break
+                        except IOError as ioe:
+                            print('file error:', ioe)
+        except Exception as e:
+            print('[{1}] Error : {0}'.format(e, ReviewAPI.reviewCrawler.__name__))
+
         self.__driver.close()
